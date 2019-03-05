@@ -1,0 +1,170 @@
+df <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00273/Example_WearableComputing_weight_lifting_exercises_biceps_curl_variations.csv",
+               header = FALSE)
+head(df)
+
+data<-df[-1,]
+head(data)
+colnames(data) <- as.character(unlist(data[1,]))
+data1 = data[-1, ]
+head(data1)
+names(data1)
+
+
+
+data1<-as.data.frame(lapply(data1, as.integer))
+sapply(data1, class)
+
+c<-cor(data1,data1$classe)
+i<-c(1:159)
+h<-data.frame(c,i)
+
+data3<-data[-1,c(1,2,4,6,7,8,9,10,36,37,38,39,40,41,44,45,46,47,48,59,
+               60,61,62,63,64,65,66,67,83,85,101,112,113,114,117,118,
+               119,120,121,139,150,151,155,156,157,158,159)]
+head(data3)
+str(data3)
+table(data3$classe)
+data3<-as.data.frame(lapply(data3[], as.integer))
+data3$classe<-as.factor(data3$classe)
+
+library(nnet)
+data3$out<-relevel(data3$classe, ref="2")
+mymodel<-multinom(out~ ., data=data3)
+summary(mymodel)
+predict(mymodel,data3)
+
+
+cm<-table(predict(mymodel),data3$classe)
+
+
+#misclassicification error
+1-sum(diag(cm))/sum(cm)
+
+#accuracy
+accuracy=sum(diag(cm))/sum(cm)
+
+#model goodness of fit
+
+actual<-table(data3$classe)
+expected<-table(predict(mymodel))
+
+chisq.test(actual, p = expected/sum(expected))
+
+#varible importance
+
+library(caret)
+varImp(mymodel, scale = FALSE)
+
+#######################################9.1#################################################
+df <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00273/Example_WearableComputing_weight_lifting_exercises_biceps_curl_variations.csv",
+               header = FALSE)
+
+data<-df[-1,]
+head(data)
+colnames(data) <- as.character(unlist(data[1,]))
+data1 = data[-1, ]
+
+data1<-as.data.frame(lapply(data1, as.integer))
+
+table(data1$classe)
+
+data1$classe<-as.factor(data1$classe)
+
+library(nnet)
+data1$out<-relevel(data1$classe, ref="2")
+mymodel<-multinom(out~ ., data=data1)
+summary(mymodel)
+predict(mymodel,data1)
+
+cm<-table(predict(mymodel),data1$classe)
+
+#accuracy
+accuracy=sum(diag(cm))/sum(cm)
+
+#misclassicification error
+1-sum(diag(cm))/sum(cm)
+
+
+#model goodness of fit
+
+actual<-table(data1$classe)
+expected<-table(predict(mymodel))
+
+chisq.test(actual, p = expected/sum(expected))
+
+#varible importance
+
+library(caret)
+varImp(mymodel, scale = FALSE)
+
+
+#######################################################9.2
+
+df <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00273/Example_WearableComputing_weight_lifting_exercises_biceps_curl_variations.csv",
+               header = FALSE)
+
+data<-df[-1,]
+head(data)
+colnames(data) <- as.character(unlist(data[1,]))
+data1 = data[-1, ]
+
+data1<-as.data.frame(lapply(data1, as.integer))
+
+table(data1$classe)
+
+
+data1$classe<-as.factor(data1$classe)
+head(data1)
+
+replacement_vec <- c("A", "B", "C", "D","E")
+levels(data1$classe) <- replacement_vec
+
+set.seed(1234)
+pd<-sample(2,nrow(data1),replace = TRUE,prob = c(0.7,0.3))
+train<-data1[pd==1,]
+validate<-data1[pd==2,]
+
+data1$skewness_roll_belt<-NULL
+
+
+#decision tree with party pakage
+
+library(party)
+tree<-ctree(classe~.,data=data1) 
+tree
+plot(tree)
+
+#predctions
+
+predict(tree,data1)
+
+
+cm<-table(predict(tree),data1$classe)
+
+##decision tree with rpart pakage
+library(rpart)
+tree1<-rpart(classe~.,data=data1)
+library(rpart.plot)
+rpart.plot(tree1,extra=4,cex = 0.6)
+
+
+
+
+##model goodness of fit
+actual<-table(data1$classe)
+expected<-table(predict(tree))
+
+chisq.test(actual, p = expected/sum(expected))
+
+library(caret)
+
+
+train_control<- trainControl(method="cv", number=10, savePredictions = TRUE)
+
+model<- train(classe~., data=data1, trControl=train_control, method="rpart")
+
+model$pred
+
+modle1<-train(classe~., data=data1, trControl=train_control, method="ctree")
+
+##############################
